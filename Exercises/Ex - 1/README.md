@@ -101,21 +101,7 @@ namespace LibraryManagement
     }
 }
 ```
-
-**Solution Guide:**
-```csharp
-public interface IBookRepository
-{
-    List<Book> GetAllBooks();
-    Book? GetBookById(int bookId);
-    bool IsBookAvailable(int bookId);
-    void BorrowBook(int bookId);
-    void ReturnBook(int bookId);
-}
-```
-
 ---
-
 ## Part 3: Repository Implementation (Students Complete)
 
 ### BookRepository.cs - TODO
@@ -199,45 +185,7 @@ namespace LibraryManagement
 }
 ```
 
-**Solution Guide:**
-```csharp
-public List<Book> GetAllBooks()
-{
-    return books;
-}
-
-public Book? GetBookById(int bookId)
-{
-    return books.FirstOrDefault(b => b.BookId == bookId);
-}
-
-public bool IsBookAvailable(int bookId)
-{
-    Book? book = GetBookById(bookId);
-    return book != null && book.IsAvailable;
-}
-
-public void BorrowBook(int bookId)
-{
-    Book? book = GetBookById(bookId);
-    if (book != null)
-    {
-        book.IsAvailable = false;
-    }
-}
-
-public void ReturnBook(int bookId)
-{
-    Book? book = GetBookById(bookId);
-    if (book != null)
-    {
-        book.IsAvailable = true;
-    }
-}
-```
-
 ---
-
 ## Part 4: Business Logic Service (Students Complete)
 
 ### LibraryService.cs - TODO
@@ -298,45 +246,7 @@ namespace LibraryManagement
 }
 ```
 
-**Solution Guide:**
-```csharp
-private IBookRepository _repository;
-
-public LibraryService(IBookRepository repository)
-{
-    _repository = repository;
-}
-
-public List<Book> GetAvailableBooks()
-{
-    return _repository.GetAllBooks()
-        .Where(b => b.IsAvailable)
-        .ToList();
-}
-
-public bool BorrowBook(int bookId)
-{
-    if (_repository.IsBookAvailable(bookId))
-    {
-        _repository.BorrowBook(bookId);
-        return true;
-    }
-    return false;
-}
-
-public void ReturnBook(int bookId)
-{
-    _repository.ReturnBook(bookId);
-}
-
-public int GetRepositoryInstanceNumber()
-{
-    return _repository.GetInstanceNumber();
-}
-```
-
 ---
-
 ## Part 5: Singleton Librarian (Students Complete)
 
 ### Librarian.cs - TODO
@@ -409,35 +319,7 @@ namespace LibraryManagement
 }
 ```
 
-**Solution Guide:**
-```csharp
-private static Librarian? _instance;
-private static readonly object _lock = new object();
-
-private Librarian()
-{
-    _librarianId = Guid.NewGuid();
-    Console.WriteLine($"[Librarian {_librarianId.ToString().Substring(0, 8)}] Created (This should print ONCE)");
-}
-
-public static Librarian GetInstance()
-{
-    if (_instance == null)
-    {
-        lock (_lock)
-        {
-            if (_instance == null)
-            {
-                _instance = new Librarian();
-            }
-        }
-    }
-    return _instance;
-}
-```
-
 ---
-
 ## Part 6: Manual DI Setup (Students Complete)
 
 ### Program.cs - TODO
@@ -520,78 +402,7 @@ namespace LibraryManagement
 }
 ```
 
-**Solution Guide:**
-```csharp
-static void Main(string[] args)
-{
-    Console.WriteLine("=== Library Management System - DI Exercise ===\n");
-
-    // STEP 1: Create the repository (dependency)
-    IBookRepository repository = new BookRepository();
-
-    // STEP 2: Create first library service (inject repository)
-    LibraryService libraryService1 = new LibraryService(repository);
-
-    // STEP 3: Create second library service (inject SAME repository)
-    LibraryService libraryService2 = new LibraryService(repository);
-
-    // STEP 4: Get singleton librarian
-    Librarian librarian = Librarian.GetInstance();
-
-    // ===== TEST 1 =====
-    Console.WriteLine("--- TEST 1: Available Books ---");
-    List<Book> availableBooks = libraryService1.GetAvailableBooks();
-    foreach (var book in availableBooks)
-    {
-        Console.WriteLine($"[ID: {book.BookId}] {book.Title} by {book.Author}");
-    }
-    librarian.LogOperation("Listed available books");
-
-    // ===== TEST 2 =====
-    Console.WriteLine("\n--- TEST 2: Borrow Book ---");
-    bool borrowed = libraryService1.BorrowBook(1);
-    Console.WriteLine($"Borrow result: {(borrowed ? "SUCCESS" : "FAILED")}");
-    librarian.LogOperation("Borrowed book ID 1");
-
-    // ===== TEST 3 =====
-    Console.WriteLine("\n--- TEST 3: Try Borrow Again (Should Fail) ---");
-    bool borrowed2 = libraryService2.BorrowBook(1);
-    Console.WriteLine($"Borrow result: {(borrowed2 ? "SUCCESS" : "FAILED")}");
-    librarian.LogOperation("Attempted to borrow book ID 1 (already borrowed)");
-
-    // ===== TEST 4 =====
-    Console.WriteLine("\n--- TEST 4: Return Book ---");
-    libraryService1.ReturnBook(1);
-    Console.WriteLine("Book returned successfully");
-    librarian.LogOperation("Returned book ID 1");
-
-    // ===== TEST 5 =====
-    Console.WriteLine("\n--- TEST 5: Borrow Again (Should Succeed) ---");
-    bool borrowed3 = libraryService2.BorrowBook(1);
-    Console.WriteLine($"Borrow result: {(borrowed3 ? "SUCCESS" : "FAILED")}");
-    librarian.LogOperation("Borrowed book ID 1 (second time)");
-
-    // ===== TEST 6 =====
-    Console.WriteLine("\n--- TEST 6: Singleton Repository Verification ---");
-    Console.WriteLine($"Service 1 repository instance: {libraryService1.GetRepositoryInstanceNumber()}");
-    Console.WriteLine($"Service 2 repository instance: {libraryService2.GetRepositoryInstanceNumber()}");
-    Console.WriteLine($"Are they the SAME? {libraryService1.GetRepositoryInstanceNumber() == libraryService2.GetRepositoryInstanceNumber()} (Should be TRUE)");
-
-    // ===== TEST 7 =====
-    Console.WriteLine("\n--- TEST 7: Singleton Librarian Verification ---");
-    Librarian librarian2 = Librarian.GetInstance();
-    Librarian librarian3 = Librarian.GetInstance();
-    Console.WriteLine($"First librarian ID: {librarian.GetLibrarianId()}");
-    Console.WriteLine($"Second call librarian ID: {librarian2.GetLibrarianId()}");
-    Console.WriteLine($"Third call librarian ID: {librarian3.GetLibrarianId()}");
-    Console.WriteLine($"Are they all the SAME? {librarian.GetLibrarianId() == librarian2.GetLibrarianId()} (Should be TRUE)");
-    
-    librarian.PrintOperationLog();
-}
-```
-
 ---
-
 ## Expected Output
 
 When completed correctly, the output should show:
@@ -715,20 +526,6 @@ Students should verify:
 
 ---
 
-## Grading Rubric
-
-| Criterion | Points |
-|-----------|--------|
-| **Interface Implementation** | 15 |
-| **Repository Logic** | 20 |
-| **Service Injection** | 15 |
-| **Singleton Pattern** | 20 |
-| **Tests Pass** | 20 |
-| **Code Quality** | 10 |
-| **Total** | 100 |
-
----
-
 ## Summary
 
 This exercise teaches students:
@@ -737,5 +534,3 @@ This exercise teaches students:
 3. How to manage singleton lifetime manually
 4. How to wire dependencies without a framework
 5. How to test DI implementation
-
-Perfect for understanding foundations before moving to ASP.NET Core's built-in DI container!
