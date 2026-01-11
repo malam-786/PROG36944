@@ -272,6 +272,11 @@ namespace LibraryManagement
         // TODO: Add lock for thread safety
         // private static readonly object _lock = new object();
 
+        // NOTE FOR STUDENTS:
+        // The field below uses "Guid" to give the Librarian a unique ID.
+        // You can research what it is, why it's useful, and how it works in C#.
+        // Start here: https://learn.microsoft.com/en-us/dotnet/api/system.guid?view=net-10.0
+
         private Guid _librarianId;
         private List<string> _operationLog = new();
         private static int totalOperations = 0;
